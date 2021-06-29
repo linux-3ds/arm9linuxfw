@@ -36,8 +36,8 @@ typedef struct vqueue_s vqueue_s;
 	@pbuf	- prBuf function pointer
 */
 #define DECLARE_VIRTDEV(name, prv, dclass, feat, vn, hrst, rcfg, wcfg, pbuf) \
-	vqueue_s name##_vqs[vn]; \
-	vdev_s name = { \
+	vqueue_s KEEP name##_vqs[vn]; \
+	vdev_s KEEP name = { \
 		.dev_id = (dclass), \
 		.status = 0, \
 		.cfg = 0, \
@@ -51,7 +51,7 @@ typedef struct vqueue_s vqueue_s;
 		.vqn = (vn), \
 		.priv = (prv) \
 	}; \
-	const u32 SECTION(".vdev_list") name##_entry = (u32)(&name);
+	const u32 KEEP SECTION(".vdev_list") name##_entry = (u32)(&name);
 
 /**
 	Initialize device array. MUST be done only once on boot
