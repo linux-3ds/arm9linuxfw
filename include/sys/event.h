@@ -6,18 +6,18 @@ typedef u8 event_t;
 
 #define EVENT_INITIALIZE	0
 
-static inline void eventInitialize(event_t *ev) {
+static inline void event_initialize(event_t *ev) {
 	*ev = 0;
 }
 
-static inline void eventTrigger(event_t *ev) {
+static inline void event_trigger(event_t *ev) {
 	*ev = 1;
 }
 
-static inline bool eventTest(event_t *ev) {
-	return armSWPB(0, ev) != 0;
+static inline bool event_test(event_t *ev) {
+	return arm_swpb(0, ev) != 0;
 }
 
-#define eventClear	eventInitialize
-#define eventWait(ev)	\
-	while(!eventTest(ev)) { armWaitForInterrupt(); }
+#define event_clear	event_initialize
+#define event_wait(ev)	\
+	while(!event_test(ev)) { arm_wait_for_interrupt(); }

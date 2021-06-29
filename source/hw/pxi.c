@@ -23,27 +23,27 @@
 #define PXI_SYNC_CNT_IRQ_ENABLE	BIT(7)
 
 typedef struct {
-	vu8 syncRx;
-	vu8 syncTx;
+	vu8 sync_rx;
+	vu8 sync_tx;
 	u8 unused;
-	vu8 syncCnt;
+	vu8 sync_cnt;
 
 	vu32 cnt;
 	vu32 tx;
 	vu32 rx;
-} PACKED pxiRegs;
+} PACKED pxi_regs;
 
-static pxiRegs *getPxiRegs(void) {
-	return (pxiRegs*)(REG_PXI_BASE);
+static pxi_regs *get_pxi_regs(void) {
+	return (pxi_regs*)(REG_PXI_BASE);
 }
 
-void pxiReset(void)
+void pxi_reset(void)
 {
-	DBG_ASSERT(armInCritical());
+	DBG_ASSERT(arm_is_in_critical());
 
-	pxiRegs *regs = getPxiRegs();
+	pxi_regs *regs = get_pxi_regs();
 
-	regs->syncCnt = 0;
+	regs->sync_cnt = 0;
 	regs->cnt = PXI_CNT_TX_FLUSH | \
 		PXI_CNT_FIFO_ERRACK | PXI_CNT_FIFO_ENABLE;
 
@@ -52,40 +52,40 @@ void pxiReset(void)
 
 	regs->cnt = PXI_CNT_RX_AVAIL_IRQ | \
 		PXI_CNT_FIFO_ERRACK | PXI_CNT_FIFO_ENABLE;
-	regs->syncCnt = PXI_SYNC_CNT_IRQ_ENABLE;
+	regs->sync_cnt = PXI_SYNC_CNT_IRQ_ENABLE;
 }
 
-uint pxiRecvEmpty(void)
+uint pxi_is_rx_empty(void)
 {
-	return getPxiRegs()->cnt & PXI_CNT_RX_EMPTY;
+	return get_pxi_regs()->cnt & PXI_CNT_RX_EMPTY;
 }
 
-uint pxiSendFull(void)
+uint pxi_is_tx_full(void)
 {
-	return getPxiRegs()->cnt & PXI_CNT_TX_FULL;
+	return get_pxi_regs()->cnt & PXI_CNT_TX_FULL;
 }
 
-u32 pxiRecvMsg(void)
+u32 pxi_recv(void)
 {
-	return getPxiRegs()->rx;
+	return get_pxi_regs()->rx;
 }
 
-void pxiSendMsg(u32 msg)
+void pxi_send(u32 msg)
 {
-	getPxiRegs()->tx = msg;
+	get_pxi_regs()->tx = msg;
 }
 
-u8 pxiRecvSync(void)
+u8 pxi_sync_get(void)
 {
-	return getPxiRegs()->syncRx;
+	return get_pxi_regs()->sync_rx;
 }
 
-void pxiSendSync(u8 data)
+void pxi_sync_set(u8 data)
 {
-	getPxiRegs()->syncTx = data;
+	get_pxi_regs()->sync_tx = data;
 }
 
-void pxiTriggerSync(void)
+void pxi_sync_trigger(void)
 {
-	getPxiRegs()->syncCnt = PXI_SYNC_CNT_IRQ_ENABLE | PXI_SYNC_CNT_IRQ_TRIG;
+	get_pxi_regs()->sync_cnt = PXI_SYNC_CNT_IRQ_ENABLE | PXI_SYNC_CNT_IRQ_TRIG;
 }

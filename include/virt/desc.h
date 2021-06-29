@@ -7,8 +7,8 @@ enum {
 	HOST_TO_VDEV = 1,
 };
 
-typedef struct virtDesc_s {
+typedef struct vdesc_s {
 	void *data;
 	u32 length;
 	int dir;
-} virtDesc_s;
+} vdesc_s;

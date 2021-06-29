@@ -7,23 +7,23 @@
 
 #define NR_IRQS 32
 
-static irqHandler irqHandlerTable[NR_IRQS];
+static irq_handler_fn irq_handlers[NR_IRQS];
 
 typedef struct {
 	vu32 enable;
 	vu32 pending;
-} PACKED irqRegs;
+} PACKED irq_regs;
 
-static irqRegs *getIrqRegs(void) {
-	return (irqRegs*)(REG_IRQ_BASE);
+static irq_regs *get_irq_regs(void) {
+	return (irq_regs*)(REG_IRQ_BASE);
 }
 
-static void irqDummyHandler(u32 irqn) {}
+static void irq_dummy_handler(u32 irqn) {}
 
-void irqReset(void)
+void irq_reset(void)
 {
-	DBG_ASSERT(armInCritical());
-	irqRegs *regs = getIrqRegs();
+	DBG_ASSERT(arm_is_in_critical());
+	irq_regs *regs = get_irq_regs();
 
 	regs->enable = 0;
 	do {
@@ -31,44 +31,44 @@ void irqReset(void)
 	} while(regs->pending != 0);
 
 	for (uint i = 0; i < NR_IRQS; i++)
-		irqHandlerTable[i] = irqDummyHandler;
+		irq_handlers[i] = irq_dummy_handler;
 }
 
-void irqEnable(u32 irqn, irqHandler handler)
+void irq_enable(u32 irqn, irq_handler_fn handler)
 {
-	DBG_ASSERT(armInCritical());
+	DBG_ASSERT(arm_is_in_critical());
 	DBG_ASSERT(irqn < NR_IRQS);
 
 	if (handler == NULL)
-		handler = irqDummyHandler;
+		handler = irq_dummy_handler;
 
-	irqHandlerTable[irqn] = handler;
-	getIrqRegs()->enable |= BIT(irqn);
+	irq_handlers[irqn] = handler;
+	get_irq_regs()->enable |= BIT(irqn);
 }
 
-void irqDisable(u32 irqn)
+void irq_disable(u32 irqn)
 {
-	DBG_ASSERT(armInCritical());
+	DBG_ASSERT(arm_is_in_critical());
 	DBG_ASSERT(irqn < NR_IRQS);
-	irqRegs *regs = getIrqRegs();
+	irq_regs *regs = get_irq_regs();
 
 	regs->enable &= BIT(irqn);
 	do {
 		regs->pending = BIT(irqn);
 	} while(regs->pending & BIT(irqn));
 
-	irqHandlerTable[irqn] = NULL;
+	irq_handlers[irqn] = NULL;
 }
 
 // called by the exception vector table in AHB RAM
-void __attribute__((target("arm"),isr("IRQ"))) irqProcess(void)
+void __attribute__((target("arm"),isr("IRQ"))) irq_process(void)
 {
-	irqRegs *regs = getIrqRegs();
+	irq_regs *regs = get_irq_regs();
 	do {
 		int irqn = TOP_BIT(regs->pending);
 		if (irqn < 0)
 			break;
 		regs->pending = BIT(irqn);
-		(irqHandlerTable[irqn])(irqn);
+		(irq_handlers[irqn])(irqn);
 	} while(1);
 }

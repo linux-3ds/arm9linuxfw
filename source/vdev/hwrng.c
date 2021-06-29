@@ -13,21 +13,21 @@ typedef struct {
 
 	vu16 cold_seed;
 	vu16 hot_seed;
-} PACKED prngRegs;
+} PACKED prng_regs;
 
-static prngRegs *getPrngRegs(void) {
-	return (prngRegs*)(REG_PRNG_BASE);
+static prng_regs *get_prng_regs(void) {
+	return (prng_regs*)(REG_PRNG_BASE);
 }
 
-static void hwrngProcessQueue(virtDev_s *vdev, virtQueue_s *vq) {
-	virtJob_s vjob;
-	prngRegs *regs = getPrngRegs();
+static void hwrng_process_vqueue(vdev_s *vdev, vqueue_s *vq) {
+	vjob_s vjob;
+	prng_regs *regs = get_prng_regs();
 
-	while(virtQueueFetchJobNew(vq, &vjob) >= 0) {
+	while(vqueue_fetch_job_new(vq, &vjob) >= 0) {
 		do {
 			u32 *data;
-			virtDesc_s desc;
-			virtQueueGetJobDesc(vq, &vjob, &desc);
+			vdesc_s desc;
+			vqueue_get_job_desc(vq, &vjob, &desc);
 
 			if (desc.dir == HOST_TO_VDEV)
 				continue;
@@ -35,19 +35,19 @@ static void hwrngProcessQueue(virtDev_s *vdev, virtQueue_s *vq) {
 			data = desc.data;
 			for (uint i = 0; i < (desc.length/4); i++)
 				data[i] = regs->hot;
-			virtJobAddWritten(&vjob, desc.length);
-		} while(virtQueueFetchJobNext(vq, &vjob) >= 0);
+			vjob_add_written(&vjob, desc.length);
+		} while(vqueue_fetch_job_next(vq, &vjob) >= 0);
 
-		virtQueuePushJob(vq, &vjob);
+		vqueue_push_job(vq, &vjob);
 	}
 
-	virtDevNotifyHost(vdev, VIRQ_VQUEUE);
+	vman_notify_host(vdev, VIRQ_VQUEUE);
 }
 
 DECLARE_VIRTDEV(
-	hwrngDevice, NULL,
+	vdev_hwrng, NULL,
 	VDEV_T_HWRNG, 0, 1,
-	virtDevResetStub,
-	virtDevRdCfgStub, virtDevWrCfgStub,
-	hwrngProcessQueue
+	vdev_reset_stub,
+	vdev_cfg_read_stub, vdev_cfg_write_stub,
+	hwrng_process_vqueue
 );

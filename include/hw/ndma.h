@@ -58,22 +58,22 @@ enum { // pre-reserved channels
 };
 
 /* reset the entire NDMA hardware block */
-void ndmaReset(u32 arbitration_flags);
+void ndma_reset(u32 arbitration_flags);
 
 /* set up timing parameters of a channel */
-void ndmaClockControl(u32 chan, u32 control);
+void ndma_setclk(u32 chan, u32 control);
 
 /* set up an async DMA transfer */
-void ndmaXferAsync(u32 chan, u32 dst, u32 src, u32 len, u32 flags);
+void ndma_xfer_async(u32 chan, u32 dst, u32 src, u32 len, u32 flags);
 
 /* test whether a transfer has finished */
-bool ndmaXferDone(u32 chan);
+bool ndma_is_busy(u32 chan);
 
 /* block execution until the transfer has finished */
-void ndmaXferWait(u32 chan);
+void ndma_wait_done(u32 chan);
 
 /* set up a synchronous DMA transfer */
-static inline void ndmaXfer(u32 chan, u32 dst, u32 src, u32 len, u32 flags) {
-	ndmaXferAsync(chan, dst, src, len, flags);
-	ndmaXferWait(chan);
+static inline void ndma_xfer(u32 chan, u32 dst, u32 src, u32 len, u32 flags) {
+	ndma_xfer_async(chan, dst, src, len, flags);
+	ndma_wait_done(chan);
 }

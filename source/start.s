@@ -5,13 +5,13 @@
 #define IRQ_STACK_SIZE (1024)
 #define SYS_STACK_SIZE (2048)
 
-ASM_FUNCTION startITCM
+ASM_FUNCTION start_itcm
 	@ Setup stacks
 	msr cpsr_c, #0xD2 @ IRQ
-	ldr sp, =irqStk
+	ldr sp, =irq_stack
 
 	msr cpsr_c, #0xDF @ SYS
-	ldr sp, =sysStk
+	ldr sp, =sys_stack
 
 
 	@ MPU Regions:
@@ -39,7 +39,7 @@ ASM_FUNCTION startITCM
 	mcr p15, 0, r3, c5, c0, 2
 	mcr p15, 0, r4, c5, c0, 3
 
-	ldr r8, =mpuRegions
+	ldr r8, =mpu_regions
 	ldmia r8, {r0-r7}
 	mcr p15, 0, r0, c6, c0, 0
 	mcr p15, 0, r1, c6, c1, 0
@@ -60,28 +60,28 @@ ASM_FUNCTION startITCM
 
 	@ Branch to C code
 	mov lr, #0
-	b arm9linuxfwEntry
+	b arm9linuxfw_entry
 
 
 .section .bss.stacks
 .align 4
 
-.global irqStk
-irqStkBottom:
+.global irq_stack
+irq_stack_bottom:
 	.space IRQ_STACK_SIZE
-irqStk:
+irq_stack:
 
-.global sysStk
-sysStkBottom:
+.global sys_stack
+sys_stack_bottom:
 	.space SYS_STACK_SIZE
-sysStk:
+sys_stack:
 
 
-.section .rodata.mpuRegions
+.section .rodata.mpu_regions
 .align 3
 
-.global mpuRegions
-mpuRegions:
+.global mpu_regions
+mpu_regions:
 	.word 0x01FF801D @ ITCM
 	.word 0x08000027 @ AHBRAM
 	.word 0x10000029 @ MMIO

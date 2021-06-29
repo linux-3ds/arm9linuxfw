@@ -32,8 +32,8 @@
 struct mmcdevice handleNAND;
 struct mmcdevice handleSD;
 
-#define wait	armDelayCycles
-#define wait_msec	armDelayCycles
+#define wait	arm_delay_cycles
+#define wait_msec	arm_delay_cycles
 
 mmcdevice *getMMCDevice(int drive)
 {

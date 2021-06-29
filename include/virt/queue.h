@@ -12,8 +12,8 @@
 #define VIRTQUEUE_MAX_DESC	32768
 
 /** Virtual queue object */
-typedef struct virtQueue_s {
-	listNode_s node;	/**< node within the pending vqueue list in the parent device */
+typedef struct vqueue_s {
+	list_node_s node;	/**< node within the pending vqueue list in the parent device */
 
 	u8 owner;	/**< queue owner internal device ID */
 
@@ -22,24 +22,24 @@ typedef struct virtQueue_s {
 		u8 ready : 1;	/**< ready state */
 	};
 
-	u16 sizeMask;	/**< size mask for all operations (amount of descriptors - 1) */
-	u16 availIdx;	/**< last available index */
-	u16 usedIdx;	/**< last used index */
-	u32 qDesc;	/**< queue descriptor address */
-	u32 qAvail;	/**< queue available ring address */
-	u32 qUsed;	/**< queue used ring address */
+	u16 size_mask;	/**< size mask for all operations (amount of descriptors - 1) */
+	u16 avail_idx;	/**< last available index */
+	u16 used_idx;	/**< last used index */
+	u32 q_desc;	/**< queue descriptor address */
+	u32 q_avail;	/**< queue available ring address */
+	u32 q_used;	/**< queue used ring address */
 	void *priv;
-} virtQueue_s;
+} vqueue_s;
 
-void virtQueueInit(virtQueue_s *vq, uint owner, uint i);
+void vqueue_init(vqueue_s *vq, uint owner, uint i);
 
-void virtQueueReset(virtQueue_s *vq);
+void vqueue_reset(vqueue_s *vq);
 
-u32 virtQueueRegRead(virtQueue_s *vq, uint reg);
-void virtQueueRegWrite(virtQueue_s *vq, uint reg, u32 val);
+u32 vqueue_reg_read(vqueue_s *vq, uint reg);
+void vqueue_reg_write(vqueue_s *vq, uint reg, u32 val);
 
-int virtQueueFetchAvailFirst(virtQueue_s *vq);
-int virtQueueFetchAvailNext(virtQueue_s *vq, u16 prev);
-void virtQueuePushUsed(virtQueue_s *vq, u16 first, u32 totalWritten);
+int vqueue_fetch_avail_first(vqueue_s *vq);
+int vqueue_fetch_avail_next(vqueue_s *vq, u16 prev);
+void vqueue_push_used(vqueue_s *vq, u16 first, u32 len);
 
-void virtQueueGetDesc(virtQueue_s *vq, u16 index, virtDesc_s *desc);
+void vqueue_get_desc(vqueue_s *vq, u16 index, vdesc_s *desc);

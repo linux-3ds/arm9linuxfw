@@ -5,7 +5,7 @@
 
 #define VIRTDEV_DEFAULT_VENDOR	0x464C4F57 // 'WOLF'
 
-void virtDevInit(virtDev_s *vdev, uint i)
+void vdev_init(vdev_s *vdev, uint i)
 {
 	/*
 	 - correctly assign the internal ID
@@ -16,12 +16,12 @@ void virtDevInit(virtDev_s *vdev, uint i)
 	vdev->id = i;
 
 	for (uint q = 0; q < vdev->vqn; q++)
-		virtQueueInit(&vdev->vqs[q], i, q);
+		vqueue_init(&vdev->vqs[q], i, q);
 
-	virtDevReset(vdev);
+	vdev_reset(vdev);
 }
 
-void virtDevReset(virtDev_s *vdev)
+void vdev_reset(vdev_s *vdev)
 {
 	/*
 	 - reset all state values to their default
@@ -33,21 +33,21 @@ void virtDevReset(virtDev_s *vdev)
 	vdev->status = 0;
 	vdev->cfg = 0;
 
-	vdev->driverFeat.dword = 0;
+	vdev->driver_feat.dword = 0;
 
 	for (uint i = 0; i < vdev->vqn; i++)
-		virtQueueReset(&vdev->vqs[i]);
-	virtDevHardReset(vdev);
+		vqueue_reset(&vdev->vqs[i]);
+	vdev_hard_reset(vdev);
 }
 
-virtQueue_s *virtDevGetQueue(virtDev_s *vdev, uint i)
+vqueue_s *vdev_get_queue(vdev_s *vdev, uint i)
 {
 	if (i >= vdev->vqn)
 		return NULL;
 	return &vdev->vqs[i];
 }
 
-enum DeviceRegisters {
+enum device_registers {
 	DeviceID = 0x00,
 	VendorID = 0x01,
 
@@ -61,59 +61,59 @@ enum DeviceRegisters {
 	ConfigGeneration = 0x07,
 };
 
-u32 virtDevInternalRegRead(virtDev_s *v, uint reg)
+u32 vdev_reg_read(vdev_s *v, uint reg)
 {
 	switch(reg) {
-		case DeviceID:
-			return v->devId;
-		case VendorID:
-			return VIRTDEV_DEFAULT_VENDOR;
-		case Status:
-			return v->status;
-		case DeviceFeaturesLo:
-			return v->deviceFeat.lo;
-		case DeviceFeaturesHi:
-			return v->deviceFeat.hi;
-		case DriverFeaturesLo:
-			return v->driverFeat.lo;
-		case DriverFeaturesHi:
-			return v->driverFeat.hi;
-		case ConfigGeneration:
-			return v->cfg;
-		default:
-			return 0;
+	case DeviceID:
+		return v->dev_id;
+	case VendorID:
+		return VIRTDEV_DEFAULT_VENDOR;
+	case Status:
+		return v->status;
+	case DeviceFeaturesLo:
+		return v->device_feat.lo;
+	case DeviceFeaturesHi:
+		return v->device_feat.hi;
+	case DriverFeaturesLo:
+		return v->driver_feat.lo;
+	case DriverFeaturesHi:
+		return v->driver_feat.hi;
+	case ConfigGeneration:
+		return v->cfg;
+	default:
+		return 0;
 	}
 }
 
-void virtDevInternalRegWrite(virtDev_s *v, uint reg, u32 val)
+void vdev_reg_write(vdev_s *v, uint reg, u32 val)
 {
 	// certain register writes should also have some side effects
 	switch(reg) {
-		case Status:
-			v->status = val;
-			break;
-		case DriverFeaturesLo:
-			v->driverFeat.lo = val;
-			break;
-		case DriverFeaturesHi:
-			v->driverFeat.hi = val;
-			break;
-		default:
-			break;
+	case Status:
+		v->status = val;
+		break;
+	case DriverFeaturesLo:
+		v->driver_feat.lo = val;
+		break;
+	case DriverFeaturesHi:
+		v->driver_feat.hi = val;
+		break;
+	default:
+		break;
 	}
 }
 
-u32 virtDevQueueRegRead(virtDev_s *v, uint vqn, u32 reg)
+u32 vdev_queue_reg_read(vdev_s *v, uint vqn, u32 reg)
 {
-	virtQueue_s *vq = virtDevGetQueue(v, vqn);
+	vqueue_s *vq = vdev_get_queue(v, vqn);
 	if (UNLIKELY(!vq))
 		return 0;
-	return virtQueueRegRead(vq, reg);
+	return vqueue_reg_read(vq, reg);
 }
 
-void virtDevQueueRegWrite(virtDev_s *v, uint vqn, u32 reg, u32 val)
+void vdev_queue_reg_write(vdev_s *v, uint vqn, u32 reg, u32 val)
 {
-	virtQueue_s *vq = virtDevGetQueue(v, vqn);
+	vqueue_s *vq = vdev_get_queue(v, vqn);
 	if (LIKELY(vq != NULL))
-		virtQueueRegWrite(vq, reg, val);
+		vqueue_reg_write(vq, reg, val);
 }

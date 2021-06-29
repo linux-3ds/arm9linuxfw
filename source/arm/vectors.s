@@ -14,7 +14,7 @@
 .global vector
 vector:
 	ldr pc, _irq_vector
-	_irq_vector: .word irqProcess
+	_irq_vector: .word irq_process
 	ldr pc, _fiq_vector
 	_fiq_vector: .word fiq_handler
 	ldr pc, _svc_vector
@@ -48,7 +48,7 @@ fiq_handler:
 	TRAP_ENTRY 4
 
 _exception_fatal:
-	ldr sp, =(abtStk - 18*4)
+	ldr sp, =(abort_stack - 18*4)
 	stmia sp, {r0-r7}               @ store the non-banked GPRs
 
 	mrs r1, cpsr
@@ -84,7 +84,7 @@ _exception_fatal:
 .section .bss.stacks
 .align 3
 
-.global abtStk
-abtStkBottom:
+.global abort_stack
+abort_stack_bottom:
 	.space ABT_STACK_SIZE
-abtStk:
+abort_stack:

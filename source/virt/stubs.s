@@ -3,23 +3,23 @@
 .arm
 .align 2
 
-.global virtDevResetStub
-.type virtDevResetStub, %function
+.global vdev_reset_stub
+.type vdev_reset_stub, %function
 
-.global virtDevRdCfgStub
-.type virtDevRdCfgStub, %function
+.global vdev_cfg_read_stub
+.type vdev_cfg_read_stub, %function
 
-.global virtDevWrCfgStub
-.type virtDevWrCfgStub, %function
+.global vdev_cfg_write_stub
+.type vdev_cfg_write_stub, %function
 
-.global virtDevPrQueueStub
-.type virtDevPrQueueStub, %function
+.global vdev_process_vqueue_stub
+.type vdev_process_vqueue_stub, %function
 
 @ Very simple virtDev operation stubs
-virtDevRdCfgStub:
+vdev_cfg_read_stub:
 	mov r0, #0
 
-virtDevResetStub:
-virtDevWrCfgStub:
-virtDevPrQueueStub:
+vdev_reset_stub:
+vdev_cfg_write_stub:
+vdev_process_vqueue_stub:
 	bx lr

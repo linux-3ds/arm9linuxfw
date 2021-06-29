@@ -42,32 +42,31 @@ typedef struct {
 	u64 sector_offset;
 } PACKED vblk_t;
 
-static blk_config sdmcBlkConfig;
+static blk_config sdmc_blk_config;
 
-static void sdmcHardReset(virtDev_s *vdev) {
-	//memset(&sdmcBlkConfig, 0, sizeof(sdmcBlkConfig));
-	u8 *data = (u8*)&sdmcBlkConfig;
-	for (uint i = 0; i < sizeof(sdmcBlkConfig); i++)
+static void sdmc_hard_reset(vdev_s *vdev) {
+	u8 *data = (u8*)&sdmc_blk_config;
+	for (uint i = 0; i < sizeof(sdmc_blk_config); i++)
 		data[i] = 0;
 	sdmmc_sdcard_init();
-	sdmcBlkConfig.capacity = sdmmc_sdcard_size();
-	sdmcBlkConfig.blk_size = 512;
+	sdmc_blk_config.capacity = sdmmc_sdcard_size();
+	sdmc_blk_config.blk_size = 512;
 }
 
-static u8 sdmcReadConfig(virtDev_s *vdev, uint offset) {
-	if (offset < sizeof(sdmcBlkConfig))
-		return ((u8*)(&sdmcBlkConfig))[offset];
+static u8 sdmc_cfg_read(vdev_s *vdev, uint offset) {
+	if (offset < sizeof(sdmc_blk_config))
+		return ((u8*)(&sdmc_blk_config))[offset];
 	return 0xFF;
 }
 
-static void sdmcProcessQueue(virtDev_s *vdev, virtQueue_s *vq) {
-	virtJob_s vjob;
+static void sdmc_process_vqueue(vdev_s *vdev, vqueue_s *vq) {
+	vjob_s vjob;
 
-	while(virtQueueFetchJobNew(vq, &vjob) >= 0) {
+	while(vqueue_fetch_job_new(vq, &vjob) >= 0) {
 		do {
 			u32 *data;
-			virtDesc_s desc;
-			virtQueueGetJobDesc(vq, &vjob, &desc);
+			vdesc_s desc;
+			vqueue_get_job_desc(vq, &vjob, &desc);
 
 			if (desc.dir == HOST_TO_VDEV) {
 				const vblk_t *blk = (const vblk_t*)desc.data;
@@ -80,20 +79,20 @@ static void sdmcProcessQueue(virtDev_s *vdev, virtQueue_s *vq) {
 					u32 sectors = desc.length >> 9;
 					sdmmc_sdcard_readsectors(OBJ_GETPRIV(vq, u32), sectors, data);
 					OBJ_SETPRIV(vq, OBJ_GETPRIV(vq, u32) + sectors);
-					virtJobAddWritten(&vjob, desc.length);
+					vjob_add_written(&vjob, desc.length);
 				}
 			}
-		} while(virtQueueFetchJobNext(vq, &vjob) >= 0);
-		virtQueuePushJob(vq, &vjob);
+		} while(vqueue_fetch_job_next(vq, &vjob) >= 0);
+		vqueue_push_job(vq, &vjob);
 	}
 
-	virtDevNotifyHost(vdev, VIRQ_VQUEUE);
+	vman_notify_host(vdev, VIRQ_VQUEUE);
 }
 
 DECLARE_VIRTDEV(
-	sdmcDevice, NULL,
+	vdev_sdcard, NULL,
 	VDEV_T_BLOCK, VIRTIO_BLK_F_RO, 1,
-	sdmcHardReset,
-	sdmcReadConfig, virtDevWrCfgStub,
-	sdmcProcessQueue
+	sdmc_hard_reset,
+	sdmc_cfg_read, vdev_cfg_write_stub,
+	sdmc_process_vqueue
 );

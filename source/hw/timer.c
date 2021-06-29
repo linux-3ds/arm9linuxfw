@@ -16,36 +16,36 @@
 typedef struct {
 	vu16 val;
 	vu16 cnt;
-} PACKED timerRegs;
+} PACKED timer_regs;
 
-static timerRegs *getTimerRegs(u32 tmr) {
-	return &((timerRegs*)(REG_TIMER_BASE))[tmr];
+static timer_regs *get_timer_regs(u32 tmr) {
+	return &((timer_regs*)(REG_TIMER_BASE))[tmr];
 }
 
-void timerReset(bool irqen)
+void timer_reset(bool irqen)
 {
 	for (uint i = 0; i < 4; i++) {
-		timerRegs *regs = getTimerRegs(i);
+		timer_regs *regs = get_timer_regs(i);
 		regs->cnt = 0;
 		regs->val = 0;
 	}
 
 	for (uint i = 3; i >= 1; i--)
-		getTimerRegs(i)->cnt = CNT_START | CNT_COUNTUP | CNT_NO_PRESCALER;
-	getTimerRegs(0)->cnt = CNT_START |
+		get_timer_regs(i)->cnt = CNT_START | CNT_COUNTUP | CNT_NO_PRESCALER;
+	get_timer_regs(0)->cnt = CNT_START |
 		(irqen ? CNT_IRQEN : 0) | CNT_NO_PRESCALER;
 }
 
-u64 timerReadTicks(void)
+u64 timer_get_ticks(void)
 {
 	u32 hi;
 	u16 quart, lo_start, lo_end;
-	timerRegs *tmr0 = getTimerRegs(0);
+	timer_regs *tmr0 = get_timer_regs(0);
 
 	do { // retry on overflow
 		lo_start = tmr0->val;
-		quart = getTimerRegs(1)->val;
-		hi = getTimerRegs(2)->val | (getTimerRegs(3)->val << 16);
+		quart = get_timer_regs(1)->val;
+		hi = get_timer_regs(2)->val | (get_timer_regs(3)->val << 16);
 		lo_end = tmr0->val;
 	} while(UNLIKELY(lo_start > lo_end));
 

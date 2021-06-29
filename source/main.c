@@ -13,11 +13,11 @@
 #define PXIMSG_CMD_DEV(m)	(((m) >> 24) & 0x7F)
 #define PXIMSG_CMD_TYPE(m)	(((m) >> 31) & 0x01)
 
-static void onPxiRecv(u32 irqn) {
-	while(!pxiRecvEmpty()) {
+static void on_pxi_recv(u32 irqn) {
+	while(!pxi_is_rx_empty()) {
 		u32 msg, dev, cmd, reg, data;
 
-		msg = pxiRecvMsg();
+		msg = pxi_recv();
 
 		cmd = PXIMSG_CMD_TYPE(msg);
 		dev = PXIMSG_CMD_DEV(msg);
@@ -25,40 +25,40 @@ static void onPxiRecv(u32 irqn) {
 
 		switch(cmd) {
 		case 0: // READ REGISTER
-			data = virtDevReadReg(dev, reg);
-			while(pxiSendFull());
-			pxiSendMsg(data);
+			data = vman_reg_read(dev, reg);
+			while(pxi_is_tx_full());
+			pxi_send(data);
 			break;
 
 		case 1: // WRITE REGISTER
-			while(pxiRecvEmpty());
-			data = pxiRecvMsg();
-			virtDevWriteReg(dev, reg, data);
+			while(pxi_is_rx_empty());
+			data = pxi_recv();
+			vman_reg_write(dev, reg, data);
 			break;
 		}
 	}
 }
 
-void NORETURN arm9linuxfwEntry(void)
+void NORETURN arm9linuxfw_entry(void)
 {
-	irqReset();
+	irq_reset();
 
-	pxiReset();
-	timerReset(false);
+	pxi_reset();
+	timer_reset(false);
 
-	virtDevInitAll();
+	vman_init_all();
 
 	// Enable interrupts, wait for new commands and process buffers
-	irqEnable(IRQ_PXI_SYNC, NULL);
-	irqEnable(IRQ_PXI_TX, NULL);
-	irqEnable(IRQ_PXI_RX, onPxiRecv);
+	irq_enable(IRQ_PXI_SYNC, NULL);
+	irq_enable(IRQ_PXI_TX, NULL);
+	irq_enable(IRQ_PXI_RX, on_pxi_recv);
 
-	armEnableInterrupts();
+	arm_interrupt_enable();
 
 	while(1) {
-		DBG_ASSERT(!armInCritical());
+		DBG_ASSERT(!arm_is_in_critical());
 
-		if (!virtManagerProcessPending())
-			armWaitForInterrupt();
+		if (!vman_process_pending())
+			arm_wait_for_interrupt();
 	}
 }

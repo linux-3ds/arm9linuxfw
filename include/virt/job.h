@@ -2,12 +2,12 @@
 
 #include "common.h"
 
-typedef struct virtJob_s {
-	u16 firstDesc;
-	u16 currentDesc;
-	u32 totalWritten;
-} virtJob_s;
+typedef struct vjob_s {
+	u16 first;
+	u16 current;
+	u32 total_written;
+} vjob_s;
 
-static inline void virtJobAddWritten(virtJob_s *vjob, s32 written) {
-	vjob->totalWritten += written;
+static inline void vjob_add_written(vjob_s *vjob, s32 written) {
+	vjob->total_written += written;
 }

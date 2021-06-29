@@ -7,45 +7,45 @@
 
 #define VIRQ_BANKS	(VIRQ_MAX / 32)
 
-static event_t eventVirq;
-static u32 pendingVirq[VIRQ_MODES][VIRQ_BANKS];
+static event_t virq_ev;
+static u32 virq_pending[VIRQ_MODES][VIRQ_BANKS];
 
-void virtIrqReset(void)
+void virtirq_reset(void)
 {
-	eventInitialize(&eventVirq);
+	event_initialize(&virq_ev);
 
 	for (uint m = 0; m < VIRQ_MODES; m++) {
 		for (uint b = 0; b < VIRQ_BANKS; b++) {
-			pendingVirq[m][b] = 0;
+			virq_pending[m][b] = 0;
 		}
 	}
 }
 
-u32 virtIrqSet(u32 devId, uint mode)
+u32 virtirq_set(u32 dev, uint mode)
 {
 	u32 ret = 0;
-	uint bankId = devId / 32;
-	uint bitOff = BIT(devId % 32);
+	uint bank = dev / 32;
+	uint mask = BIT(dev % 32);
 
-	if ((bankId < VIRQ_BANKS) && (mode < VIRQ_MODES)) {
-		ret = pendingVirq[mode][bankId];
-		pendingVirq[mode][bankId] |= bitOff;
-		eventTrigger(&eventVirq);
+	if ((bank < VIRQ_BANKS) && (mode < VIRQ_MODES)) {
+		ret = virq_pending[mode][bank];
+		virq_pending[mode][bank] |= mask;
+		event_trigger(&virq_ev);
 	}
 
 	return ret;
 }
 
-u32 virtIrqGet(u32 bankId, uint mode)
+u32 virtirq_get(u32 bank, uint mode)
 {
-	if ((bankId < VIRQ_BANKS) && (mode < VIRQ_MODES))
-		return armSWP(0, &pendingVirq[mode][bankId]);
+	if ((bank < VIRQ_BANKS) && (mode < VIRQ_MODES))
+		return arm_swp(0, &virq_pending[mode][bank]);
 	return 0;
 }
 
 /* only trigger the ARM11 if absolutely necessary */
-void virtIrqSync(void)
+void virtirq_sync(void)
 {
-	if (eventTest(&eventVirq))
-		pxiTriggerSync();
+	if (event_test(&virq_ev))
+		pxi_sync_trigger();
 }

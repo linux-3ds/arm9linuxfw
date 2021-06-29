@@ -46,19 +46,19 @@ __start:
 	ldr r0, =__vector_lma
 	ldr r1, =__vector_s
 	ldr r2, =__vector_e
-	bl BootReloc
+	bl boot_reloc
 
 	@ Relocate executable code
 	ldr r0, =__text_lma
 	ldr r1, =__text_s
 	ldr r2, =__text_e
-	bl BootReloc
+	bl boot_reloc
 
 	@ Relocate data and rodata
 	ldr r0, =__data_lma
 	ldr r1, =__data_s
 	ldr r2, =__data_e
-	bl BootReloc
+	bl boot_reloc
 
 
 	@ Clear BSS
@@ -72,17 +72,17 @@ __start:
 
 
 	@ Branch to main startup code
-	ldr pc, =startITCM
+	ldr pc, =start_itcm
 
 
 @ equivalent to memcpy(vma_start, lma, vma_end - vma_start)
 @ assumes all pointers are aligned to a 4 byte boundary
 @ and the length to copy is aligned to 16 bytes
-BootReloc:
+boot_reloc:
 	cmp r1, r2
 	ldmloia r0!, {r3-r6}
 	stmloia r1!, {r3-r6}
-	blo BootReloc
+	blo boot_reloc
 	bx lr
 
 .pool

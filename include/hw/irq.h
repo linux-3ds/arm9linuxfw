@@ -3,19 +3,19 @@
 #include "common.h"
 
 /** interrupt callback funcptr type */
-typedef void (*irqHandler)(u32);
+typedef void (*irq_handler_fn)(u32);
 
 /** resets all interrupt callbacks and registers */
-void irqReset(void);
+void irq_reset(void);
 
 /** enable interrupt line and set a handler (stubbed if handler is NULL) */
-void irqEnable(u32 irqn, irqHandler handler);
+void irq_enable(u32 irqn, irq_handler_fn handler);
 
 /** disables an interrupt line */
-void irqDisable(u32 irqn);
+void irq_disable(u32 irqn);
 
-
-#define IRQ_TIMER(n)	(0x08 + (n))
+#define IRQ_NDMA(n)	(IRQ_NDMA0 + (n))
+#define IRQ_TIMER(n)	(IRQ_TIMER0 + (n))
 
 enum {
 	IRQ_NDMA0 = 0,

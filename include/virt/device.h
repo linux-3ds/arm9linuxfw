@@ -4,11 +4,11 @@
 
 #include "sys/list.h"
 
-typedef struct virtDev_s virtDev_s;
-typedef struct virtQueue_s virtQueue_s;
+typedef struct vdev_s vdev_s;
+typedef struct vqueue_s vqueue_s;
 
 /** VirtIO device feature bits */
-enum VirtDevFeatureBits {
+enum vdev_feature_bits {
 	/**< This feature enables the used_event and the avail_event fields */
 	VDEV_F_RING_EVENT_IDX = BIT(29),
 
@@ -33,7 +33,7 @@ enum VirtDevFeatureBits {
 };
 
 /** VirtIO device status bits */
-enum VirtDevStatusBits {
+enum vdev_status_bits {
 	/**< The guest recognizes the device as a valid VirtIO device */
 	VDEV_S_ACK = BIT(0),
 
@@ -54,7 +54,7 @@ enum VirtDevStatusBits {
 };
 
 /** VirtIO device types */
-enum VirtDevType {
+enum vdev_type {
 	VDEV_T_BLOCK = 2,	/**< Block device */
 	VDEV_T_HWRNG = 4,	/**< Entropy source */
 	VDEV_T_CRYPTO = 20,	/**< Hardware cryptography module */
@@ -71,82 +71,74 @@ enum VirtDevType {
  It also contains a pointer to the virtqueues that correspond to the device,
  and a private device pointer, to use at the coder's discretion.
 */
-typedef struct virtDev_s {
+typedef struct vdev_s {
 	u32 id;	/**< Internal device ID */
-	const u16 devId;	/**< Device class */
+	const u16 dev_id;	/**< Device class */
 	u16 status;	/**< Current device status */
 	u32 cfg;	/**< Device configuration generation */
 
 	union {
 		u64 dword;
 		struct { u32 lo, hi; };
-	} deviceFeat, driverFeat;	/**< Device and driver feature bits. */
+	} device_feat, driver_feat;	/**< Device and driver feature bits. */
 
 	/**< Perform any needed hardware/software reset */
-	void (*hardReset)(virtDev_s*);
+	void (*hard_reset)(vdev_s*);
 
 	/**< Read a byte from the config space */
-	u8 (*rdCfg)(virtDev_s*, uint);
+	u8 (*read_cfg)(vdev_s*, uint);
 
 	/**< Write a byte to the config space */
-	void (*wrCfg)(virtDev_s*, uint, u8);
+	void (*write_cfg)(vdev_s*, uint, u8);
 
 	/**< Start processing any pending jobs in this virtqueue */
-	void (*prQueue)(virtDev_s*, virtQueue_s*);
+	void (*process_vqueue)(vdev_s*, vqueue_s*);
 
-	virtQueue_s *const vqs;	/**< Base of virtqueue array */
+	vqueue_s *const vqs;	/**< Base of virtqueue array */
 	const uint vqn;	/**< Number of virtqueues associated to this device */
 
 	void *priv;	/**< Private device data */
-} virtDev_s;
+} vdev_s;
 
 /**
 	First-time VirtIO initialization. Only called by the manager.
 */
-void virtDevInit(virtDev_s *vdev, uint i);
+void vdev_init(vdev_s *vdev, uint i);
 
 /**
 	VirtIO device reset function. Resets all internal
 	registers and calls the hardware reset operation.
 */
-void virtDevReset(virtDev_s *vdev);
+void vdev_reset(vdev_s *vdev);
 
 /** Gets the internal ID of a virtual device */
-#define virtDevId(v)	((v)->id)
+#define vdev_id(v)	((v)->id)
 
 /**
 	Returns a specific VirtQueue associated to the device
 	if it exists, otherwise returns a NULL pointer.
 */
-virtQueue_s *virtDevGetQueue(virtDev_s *vdev, uint i);
+vqueue_s *vdev_get_queue(vdev_s *vdev, uint i);
 
-/**
-	Read an internal device register.
-*/
-u32 virtDevInternalRegRead(virtDev_s *vdev, uint reg);
+u32 vdev_reg_read(vdev_s *vdev, uint reg);
+void vdev_reg_write(vdev_s *vdev, uint reg, u32 val);
 
-/**
-	Read an internal device register.
-*/
-void virtDevInternalRegWrite(virtDev_s *vdev, uint reg, u32 val);
-
-u32 virtDevQueueRegRead(virtDev_s *v, uint vqn, u32 reg);
-void virtDevQueueRegWrite(virtDev_s *v, uint vqn, u32 reg, u32 val);
+u32 vdev_queue_reg_read(vdev_s *v, uint vqn, u32 reg);
+void vdev_queue_reg_write(vdev_s *v, uint vqn, u32 reg, u32 val);
 
 /** VirtDev operation wrappers */
-#define virtDevHardReset(v)	((v)->hardReset)(v)
-#define virtDevCfgRead(v, off)	((v)->rdCfg)(v, off)
-#define virtDevCfgWrite(v, off, data)	((v)->wrCfg)(v, off, data)
-#define virtDevProcessQueue(v, vq)	((v)->prQueue)(v, vq)
+#define vdev_hard_reset(v)	((v)->hard_reset)(v)
+#define vdev_cfg_read(v, off)	((v)->read_cfg)(v, off)
+#define vdev_cfg_write(v, off, data)	((v)->write_cfg)(v, off, data)
+#define vdev_process_vqueue(v, vq)	((v)->process_vqueue)(v, vq)
 
 /**
 	VirtIO device stub functions
-	These are "compatible" with the interface
-	but dont really do anything and barely use
-	any code space.
-	To use as stubs when a function isn't really necessary.
+	These are "compatible" with the interface but dont really
+	do anything and barely use any code space.
+	Use as stubs when a function isn't really necessary.
 */
-void virtDevResetStub(virtDev_s *vdev);
-u8 virtDevRdCfgStub(virtDev_s *vdev, uint off);
-void virtDevWrCfgStub(virtDev_s *vdev, uint off, u8 val);
-void virtDevPrQueueStub(virtDev_s *vdev, virtQueue_s *vq);
+void vdev_reset_stub(vdev_s *vdev);
+u8 vdev_cfg_read_stub(vdev_s *vdev, uint off);
+void vdev_cfg_write_stub(vdev_s *vdev, uint off, u8 val);
+void vdev_process_vqueue_stub(vdev_s *vdev, vqueue_s *vq);
