@@ -8,7 +8,7 @@ SOURCE  := source
 BUILD   := build
 INCDIR	:= include
 SUBARCH := -mcpu=arm946e-s -mfloat-abi=soft -marm -mno-thumb-interwork \
-			-ggdb -nostdlib -ffreestanding -nostartfiles -lgcc
+	-ggdb -nostdlib -ffreestanding -nostartfiles -lgcc -flto
 
 DBG_FLAG :=
 # ifneq ($(RELEASE),)

@@ -68,7 +68,6 @@ typedef volatile s64 vs64;
 #define ATTR_USED	__attribute__((used))
 #define APACKED(x)	__attribute__((packed, aligned(x)))
 #define PACKED	APACKED(4) /* defaults to 4 byte alignment */
-#define UNUSED	__attribute__((unused))
 
 #define NORETURN	__attribute__((noreturn))
 #define ALIGNED(n)	__attribute__((aligned(n)))
@@ -77,5 +76,8 @@ typedef volatile s64 vs64;
 #define UNLIKELY(x)	__builtin_expect(!!(x), 0)
 
 #define SECTION(s)	__attribute__((section(s)))
+
+#define KEEP	__attribute__((used))
+#define UNUSED	__attribute__((unused))
 
 #endif // __ASSEMBLER__

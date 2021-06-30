@@ -135,8 +135,8 @@ static inline void arm_wait_for_interrupt(void) {
 static inline u32 arm_swp(u32 val, u32 *addr) {
 	u32 old;
 	asmv(
-		"swp %0, %1, [ %2 ]\n\t"
-		: "=r"(old) : "r"(val), "r"(addr) : "memory"
+		"swp %0, %1, [%2]\n\t"
+		: "=&r"(old) : "r"(val), "r"(addr) : "memory"
 	);
 	return old;
 }
@@ -145,8 +145,8 @@ static inline u32 arm_swp(u32 val, u32 *addr) {
 static inline u32 arm_swpb(u8 val, u8 *addr) {
 	u32 old;
 	asmv(
-		"swpb %0, %1, [ %2 ]\n\t"
-		: "=r"(old) : "r"(val), "r"(addr) : "memory"
+		"swpb %0, %1, [%2]\n\t"
+		: "=&r"(old) : "r"(val), "r"(addr) : "memory"
 	);
 	return old;
 }
