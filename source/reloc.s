@@ -1,5 +1,4 @@
 #include "asm.h"
-#include "arm/bfn.h"
 
 .section .bootstrap, "ax"
 .global __start
@@ -42,22 +41,31 @@ __start:
 	mcr p15, 0, r0, c1, c0, 0
 
 
+	@ Get relocation base
+	ldr r11, =__bootstrap_start
+	adr r12, __start
+	sub r12, r12, r11
+
+
 	@ Relocate vectors
 	ldr r0, =__vector_lma
 	ldr r1, =__vector_s
 	ldr r2, =__vector_e
+	add r0, r0, r12
 	bl boot_reloc
 
 	@ Relocate executable code
 	ldr r0, =__text_lma
 	ldr r1, =__text_s
 	ldr r2, =__text_e
+	add r0, r0, r12
 	bl boot_reloc
 
 	@ Relocate data and rodata
 	ldr r0, =__data_lma
 	ldr r1, =__data_s
 	ldr r2, =__data_e
+	add r0, r0, r12
 	bl boot_reloc
 
 
