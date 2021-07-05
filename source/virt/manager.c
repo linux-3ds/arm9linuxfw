@@ -1,6 +1,8 @@
 #include "common.h"
 
 #include "arm/arm.h"
+#include "arm/critical.h"
+
 #include "hw/pxi.h"
 
 #include "virt/irq.h"
@@ -31,6 +33,8 @@ vdev_s *vman_get_dev(uint n)
 
 void vman_init_all(void)
 {
+	need_critical();
+
 	/*
 	 - initialize virtual IRQ subsystem
 	 - initialize global pending vq list
@@ -78,6 +82,8 @@ u32 vman_reg_read(uint dev, uint reg)
 	uint rtype;
 	vdev_s *vdev;
 
+	need_critical();
+
 	vman_decode_reg(&reg, &rtype);
 
 	// manager registers ignore the device field
@@ -103,6 +109,8 @@ void vman_reg_write(uint dev, uint reg, u32 val)
 {
 	uint rtype;
 	vdev_s *vdev;
+
+	need_critical();
 
 	vman_decode_reg(&reg, &rtype);
 
@@ -139,9 +147,7 @@ bool vman_process_pending(void)
 	vqueue_s *vq;
 	list_node_s *next_vq;
 
-	u32 crit_lock = arm_enter_critical();
-
-	do {
+	CRITICAL_BLOCK(
 		if (list_empty(&vq_pending)) {
 			// no queues left to process
 			// let the system sleep a bit
@@ -157,9 +163,8 @@ bool vman_process_pending(void)
 		// alert the device that there MIGHT be pending
 		// descriptors in this virtqueue
 		vdev_process_vqueue(vqueue_owner(vq), vq);
-	} while(0);
+	);
 
-	arm_leave_critical(crit_lock);
 	return ret;
 }
 

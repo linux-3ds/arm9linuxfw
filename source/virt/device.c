@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "arm/critical.h"
+
 #include "virt/device.h"
 #include "virt/queue.h"
 
@@ -13,6 +15,7 @@ void vdev_init(vdev_s *vdev, uint i)
 	  - initialize virtqueue
 	 - reset device registers and hardware
 	*/
+
 	vdev->id = i;
 
 	for (uint q = 0; q < vdev->vqn; q++)
@@ -23,6 +26,8 @@ void vdev_init(vdev_s *vdev, uint i)
 
 void vdev_reset(vdev_s *vdev)
 {
+	need_critical();
+
 	/*
 	 - reset all state values to their default
 	 - for each virtqueue:
@@ -63,6 +68,8 @@ enum device_registers {
 
 u32 vdev_reg_read(vdev_s *v, uint reg)
 {
+	need_critical();
+
 	switch(reg) {
 	case DeviceID:
 		return v->dev_id;
@@ -87,6 +94,8 @@ u32 vdev_reg_read(vdev_s *v, uint reg)
 
 void vdev_reg_write(vdev_s *v, uint reg, u32 val)
 {
+	need_critical();
+
 	// certain register writes should also have some side effects
 	switch(reg) {
 	case Status:

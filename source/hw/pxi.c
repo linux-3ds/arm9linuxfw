@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "arm/arm.h"
+#include "arm/critical.h"
 
 #include "hw/pxi.h"
 
@@ -39,7 +40,7 @@ static pxi_regs *get_pxi_regs(void) {
 
 void pxi_reset(void)
 {
-	DBG_ASSERT(arm_is_in_critical());
+	need_critical();
 
 	pxi_regs *regs = get_pxi_regs();
 

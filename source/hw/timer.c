@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "arm/critical.h"
+
 #include "hw/timer.h"
 
 #define REG_TIMER_BASE	(0x10003000)
@@ -24,6 +26,8 @@ static timer_regs *get_timer_regs(u32 tmr) {
 
 void timer_reset(bool irqen)
 {
+	need_critical();
+
 	for (uint i = 0; i < 4; i++) {
 		timer_regs *regs = get_timer_regs(i);
 		regs->cnt = 0;
@@ -42,7 +46,7 @@ u64 timer_get_ticks(void)
 	u16 quart, lo_start, lo_end;
 	timer_regs *tmr0 = get_timer_regs(0);
 
-	do { // retry on overflow
+	do { // retry on overflow, hopefully it only needs to retry once
 		lo_start = tmr0->val;
 		quart = get_timer_regs(1)->val;
 		hi = get_timer_regs(2)->val | (get_timer_regs(3)->val << 16);

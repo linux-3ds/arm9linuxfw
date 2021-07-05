@@ -1,5 +1,7 @@
 #pragma once
 
+#include "arm/critical.h"
+
 typedef struct list_node_s list_node_s;
 
 #define list_head_s list_node_s
@@ -43,6 +45,8 @@ static inline void list_add_tail(list_node_s *n, list_head_s *h) {
 }
 
 static inline bool list_append_if_not_embedded(list_node_s *n, list_head_s *h) {
+	need_critical();
+
 	if (!list_node_embedded(n)) {
 		list_add_tail(n, h);
 		return true;

@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "arm/critical.h"
+
 #include "hw/irq.h"
 #include "hw/ndma.h"
 
@@ -39,6 +41,8 @@ static void ndmaIrqHandler(u32 irqn) {
 
 void ndmaReset(u32 arbitration_flags)
 {
+	need_critical();
+
 	vu32 *global_cnt = get_ndma_cnt();
 
 	*global_cnt = 0;

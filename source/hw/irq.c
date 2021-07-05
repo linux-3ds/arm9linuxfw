@@ -1,6 +1,8 @@
 #include "common.h"
 
 #include "arm/arm.h"
+#include "arm/critical.h"
+
 #include "hw/irq.h"
 
 #define REG_IRQ_BASE (0x10001000)
@@ -18,11 +20,14 @@ static irq_regs *get_irq_regs(void) {
 	return (irq_regs*)(REG_IRQ_BASE);
 }
 
-static void irq_dummy_handler(u32 irqn) {}
+static void irq_dummy_handler(u32 irqn) {
+	need_critical();
+}
 
 void irq_reset(void)
 {
-	DBG_ASSERT(arm_is_in_critical());
+	need_critical();
+
 	irq_regs *regs = get_irq_regs();
 
 	regs->enable = 0;
@@ -36,7 +41,7 @@ void irq_reset(void)
 
 void irq_enable(u32 irqn, irq_handler_fn handler)
 {
-	DBG_ASSERT(arm_is_in_critical());
+	need_critical();
 	DBG_ASSERT(irqn < NR_IRQS);
 
 	if (handler == NULL)
@@ -48,8 +53,9 @@ void irq_enable(u32 irqn, irq_handler_fn handler)
 
 void irq_disable(u32 irqn)
 {
-	DBG_ASSERT(arm_is_in_critical());
+	need_critical();
 	DBG_ASSERT(irqn < NR_IRQS);
+
 	irq_regs *regs = get_irq_regs();
 
 	regs->enable &= BIT(irqn);

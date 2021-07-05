@@ -56,7 +56,7 @@ void NORETURN arm9linuxfw_entry(void)
 	arm_interrupt_enable();
 
 	while(1) {
-		DBG_ASSERT(!arm_is_in_critical());
+		need_sleep();
 
 		if (!vman_process_pending())
 			arm_wait_for_interrupt();

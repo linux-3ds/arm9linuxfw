@@ -38,7 +38,12 @@ typedef volatile s64 vs64;
 #define COUNT_OF(x)	(sizeof(x) / sizeof(*(x)))
 
 #define DBG_ASSERT(x)	\
-	do{ if (!(x)) { __builtin_trap();__builtin_unreachable(); } }while(0)
+	do { \
+		if (UNLIKELY(!(x))) { \
+			__builtin_trap(); \
+			__builtin_unreachable(); \
+		} \
+	}while(0)
 
 #define CONTAINER_OF(p, t, m) \
 	((t*)((const char*)(p) - offsetof(t, m)))

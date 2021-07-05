@@ -1,6 +1,8 @@
 #include "common.h"
 
 #include "arm/arm.h"
+#include "arm/critical.h"
+
 #include "virt/queue.h"
 #include "virt/manager.h"
 
@@ -14,6 +16,8 @@ void vqueue_init(vqueue_s *vq, uint owner, uint i)
 
 void vqueue_reset(vqueue_s *vq)
 {
+	need_critical();
+
 	list_remove(&vq->node);
 	vq->ready = 0;
 	vq->size_mask = 0;
@@ -38,6 +42,8 @@ enum queue_regs {
 
 u32 vqueue_reg_read(vqueue_s *vq, uint reg)
 {
+	need_critical();
+
 	switch(reg) {
 	case QueueNumMax:
 		return VIRTQUEUE_MAX_DESC;
@@ -63,6 +69,8 @@ static void vqueue_set_desc_count(vqueue_s *vq, u32 val) {
 
 void vqueue_reg_write(vqueue_s *vq, uint reg, u32 val)
 {
+	need_critical();
+
 	switch(reg) {
 	case QueueNumCurrent:
 		vqueue_set_desc_count(vq, val);
@@ -114,6 +122,8 @@ typedef struct vqUsed_s {
 
 int vqueue_fetch_avail_first(vqueue_s *vq)
 {
+	need_critical();
+
 	uint index, avail;
 	const vqAvail_s *vqA = (const vqAvail_s*)vq->q_avail;
 
@@ -132,6 +142,8 @@ int vqueue_fetch_avail_first(vqueue_s *vq)
 
 int vqueue_fetch_avail_next(vqueue_s *vq, u16 prev)
 {
+	need_critical();
+
 	const vqDesc_s *vqD = (const vqDesc_s*)vq->q_desc;
 	if (vqD[prev].flags & VQ_DESC_F_NEXT)
 		return vqD[prev].next;
@@ -140,6 +152,8 @@ int vqueue_fetch_avail_next(vqueue_s *vq, u16 prev)
 
 void vqueue_push_used(vqueue_s *vq, u16 first, u32 len)
 {
+	need_critical();
+
 	vqUsed_s *vqU = (vqUsed_s*)vq->q_used;
 	unsigned index = vq->used_idx & vq->size_mask;
 
@@ -160,6 +174,8 @@ void vqueue_push_used(vqueue_s *vq, u16 first, u32 len)
 
 void vqueue_get_desc(vqueue_s *vq, u16 index, vdesc_s *desc)
 {
+	need_critical();
+
 	const vqDesc_s *vqD = (const vqDesc_s*)vq->q_desc;
 
 	if (index <= vq->size_mask) {

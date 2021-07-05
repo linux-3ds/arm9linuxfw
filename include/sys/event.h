@@ -1,6 +1,7 @@
 #pragma once
 
 #include "arm/arm.h"
+#include "arm/critical.h"
 
 typedef u8 event_t;
 
@@ -19,5 +20,10 @@ static inline bool event_test(event_t *ev) {
 }
 
 #define event_clear	event_initialize
-#define event_wait(ev)	\
-	while(!event_test(ev)) { arm_wait_for_interrupt(); }
+
+static inline void event_wait(event_t *ev) {
+	need_sleep();
+
+	while(!event_test(ev))
+		arm_wait_for_interrupt();
+}

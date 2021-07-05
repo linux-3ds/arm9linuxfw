@@ -1,6 +1,8 @@
 #include "common.h"
 
 #include "arm/arm.h"
+#include "arm/critical.h"
+
 #include "hw/pxi.h"
 #include "sys/event.h"
 #include "virt/irq.h"
@@ -12,6 +14,8 @@ static u32 virq_pending[VIRQ_MODES][VIRQ_BANKS];
 
 void virtirq_reset(void)
 {
+	need_critical();
+
 	event_initialize(&virq_ev);
 
 	for (uint m = 0; m < VIRQ_MODES; m++) {
@@ -23,6 +27,8 @@ void virtirq_reset(void)
 
 u32 virtirq_set(u32 dev, uint mode)
 {
+	need_critical();
+
 	u32 ret = 0;
 	uint bank = dev / 32;
 	uint mask = BIT(dev % 32);
