@@ -39,7 +39,7 @@ static void ndmaIrqHandler(u32 irqn) {
 	event_trigger(&ndma_xfer_ev[channel]);
 }
 
-void ndmaReset(u32 arbitration_flags)
+void ndma_reset(u32 arbitration_flags)
 {
 	need_critical();
 
@@ -54,13 +54,13 @@ void ndmaReset(u32 arbitration_flags)
 	*global_cnt = arbitration_flags | BIT(0); // enable
 }
 
-void ndmaClockControl(u32 chan, u32 control)
+void ndma_setclk(u32 chan, u32 control)
 {
 	DBG_ASSERT(chan < NUM_CHANNELS);
 	get_ndma_regs(chan)->clk_cnt = control;
 }
 
-void ndmaXferAsync(u32 chan, u32 dst, u32 src, u32 len, u32 flags)
+void ndma_xfer_async(u32 chan, u32 dst, u32 src, u32 len, u32 flags)
 {
 	ndma_regs *regs;
 	DBG_ASSERT(chan < NUM_CHANNELS);
@@ -77,13 +77,13 @@ void ndmaXferAsync(u32 chan, u32 dst, u32 src, u32 len, u32 flags)
 	regs->cnt = flags | NDMA_CNT_IRQEN | NDMA_CNT_START;
 }
 
-bool ndmaXferDone(u32 chan)
+bool ndma_is_busy(u32 chan)
 {
 	DBG_ASSERT(chan < NUM_CHANNELS);
 	return event_test(&ndma_xfer_ev[chan]);
 }
 
-void ndmaXferWait(u32 chan)
+void ndma_wait_done(u32 chan)
 {
 	DBG_ASSERT(chan < NUM_CHANNELS);
 	event_wait(&ndma_xfer_ev[chan]);
