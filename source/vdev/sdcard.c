@@ -4,6 +4,7 @@
 #include "virt/manager.h"
 
 #define VIRTIO_BLK_F_RO	BIT(5)
+#define VIRTIO_BLK_F_BLK_SIZE	BIT(6)
 
 typedef struct {
 	u64 capacity;
@@ -59,39 +60,132 @@ static u8 sdmc_cfg_read(vdev_s *vdev, uint offset) {
 	return 0xFF;
 }
 
+static void sdmc_rx(vdev_s *vdev, vqueue_s *vq, const vblk_t *blk, vjob_s *vj, vdesc_s *vd) {
+	// send data from SD to linux
+
+	// first descriptor is a simple vblk (RO), then
+	// a 512*n byte buffer (RW) descriptor, and finally the status byte
+
+	u32 offset = blk->sector_offset;
+
+	// all data needs to be handled in separate descriptors
+	while(vqueue_fetch_job_next(vq, vj) >= 0) {
+		u8 *data;
+		vdesc_s desc;
+
+		vqueue_get_job_desc(vq, vj, &desc);
+
+		data = desc.data;
+
+		if (desc.length % 512) {
+			// assume status byte
+			*data = 0;
+		} else {
+			u32 count = desc.length / 512;
+			sdmmc_sdcard_readsectors(offset, count, data);
+
+			offset += count * 512;
+			vjob_add_written(vj, count * 512);
+		}
+	}
+}
+
+static void sdmc_tx(vdev_s *vdev, vqueue_s *vq, const vblk_t *blk, vjob_s *vj, vdesc_s *vd) {
+	// single continuous descriptor that contains everything?
+
+	u32 offset, count;
+	u8 *data = vd->data + sizeof(*blk);
+
+	offset = blk->sector_offset;
+	count = vd->length - sizeof(*blk) - 1;
+
+	DBG_ASSERT(!(count % 512));
+
+	count /= 512;
+
+	sdmmc_sdcard_writesectors(offset, count, data);
+	data[count * 512] = 0; // status byte
+}
+
 static void sdmc_process_vqueue(vdev_s *vdev, vqueue_s *vq) {
 	vjob_s vjob;
 
 	while(vqueue_fetch_job_new(vq, &vjob) >= 0) {
-		do {
-			u32 *data;
-			vdesc_s desc;
-			vqueue_get_job_desc(vq, &vjob, &desc);
+		vblk_t vblk;
+		vdesc_s desc;
+		vqueue_get_job_desc(vq, &vjob, &desc);
 
-			if (desc.dir == HOST_TO_VDEV) {
-				const vblk_t *blk = (const vblk_t*)desc.data;
-				OBJ_SETPRIV(vq, (u32)blk->sector_offset);
-			} else {
-				u8 *data = desc.data;
-				if (desc.length < 512) {
-					*data = 0;
-				} else {
-					u32 sectors = desc.length >> 9;
-					sdmmc_sdcard_readsectors(OBJ_GETPRIV(vq, u32), sectors, data);
-					OBJ_SETPRIV(vq, OBJ_GETPRIV(vq, u32) + sectors);
-					vjob_add_written(&vjob, desc.length);
+		vblk = *(volatile vblk_t*)(desc.data);
+
+		switch(vblk.type) {
+		case 0: // VIRTIO_BLK_T_IN
+			sdmc_rx(vdev, vq, &vblk, &vjob, &desc);
+			break;
+
+		case 1: // VIRTIO_BLK_T_OUT
+			sdmc_tx(vdev, vq, &vblk, &vjob, &desc);
+			break;
+		}
+
+		vqueue_push_job(vq, &vjob);
+		vman_notify_host(vdev, VIRQ_VQUEUE);
+	}
+
+/*
+			// categorize data by request size first
+			switch(desc.length) {
+			case 1: // status byte
+			{
+				// blindly assume there's no error
+				*(u8*)(desc.data) = 0;
+				break;
+			}
+
+			case sizeof(vblk_t): // block request header
+			{
+				*vdev_vblk = *(volatile vblk_t*)(desc.data);
+				OBJ_SETPRIV(vq, (u32)vdev_vblk->sector_offset);
+				break;
+			}
+
+			default: // probably data
+			{
+				u8 *data;
+				u32 count, offset;
+
+				data = desc.data;
+				count = desc.length;
+				offset = OBJ_GETPRIV(vq, u32);
+
+				if (count % 512) // wtf?
+					break;
+
+				count /= 512;
+				// given in multiples of 512
+
+				if (vdev_vblk->type == 0) {
+					// VIRTIO_BLK_T_IN
+					sdmmc_sdcard_readsectors(offset, count, data);
+					vjob_add_written(&vjob, count << 9);
+				} else if (vdev_vblk->type == 1) {
+					// VIRTIO_BLK_T_OUT
+					sdmmc_sdcard_writesectors(offset, count, data);
 				}
+
+				OBJ_SETPRIV(vq, offset + count);
+				break;
+			}
 			}
 		} while(vqueue_fetch_job_next(vq, &vjob) >= 0);
 		vqueue_push_job(vq, &vjob);
-	}
+	}*/
 
-	vman_notify_host(vdev, VIRQ_VQUEUE);
+	//vman_notify_host(vdev, VIRQ_VQUEUE);
 }
 
 DECLARE_VIRTDEV(
 	vdev_sdcard, NULL,
-	VDEV_T_BLOCK, VIRTIO_BLK_F_RO, 1,
+	VDEV_T_BLOCK, VIRTIO_BLK_F_BLK_SIZE, 1,
 	sdmc_hard_reset,
 	sdmc_cfg_read, vdev_cfg_write_stub,
 	sdmc_process_vqueue
