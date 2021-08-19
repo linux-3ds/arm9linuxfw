@@ -66,13 +66,17 @@ uint pxi_is_tx_full(void)
 	return get_pxi_regs()->cnt & PXI_CNT_TX_FULL;
 }
 
-u32 pxi_recv(void)
+u32 pxi_recv(bool poll)
 {
+	if (poll)
+		while(pxi_is_rx_empty());
 	return get_pxi_regs()->rx;
 }
 
-void pxi_send(u32 msg)
+void pxi_send(u32 msg, bool poll)
 {
+	if (poll)
+		while(pxi_is_tx_full());
 	get_pxi_regs()->tx = msg;
 }
 

@@ -17,7 +17,7 @@ DBG_FLAG :=
 
 INCLUDE := -I$(SOURCE) -I$(INCDIR)
 ASFLAGS := $(SUBARCH) $(INCLUDE) -x assembler-with-cpp
-CFLAGS := $(SUBARCH) $(INCLUDE) -MMD -MP -std=c11 -Os -pipe -Wall -Wextra \
+CFLAGS := $(SUBARCH) $(INCLUDE) -MMD -MP -std=c99 -O2 -pipe -Wall -Wextra \
 			-Wno-unused-variable -Wno-unused-parameter -Wno-unused-function \
 			-ffunction-sections -fomit-frame-pointer -ffast-math $(DBG_FLAG)
 
@@ -28,8 +28,8 @@ rwildcard = $(foreach d, $(wildcard $1*), \
             $(call rwildcard, $d/, $2))
 
 SOURCE_OUTPUT := $(patsubst $(SOURCE)/%.c, $(BUILD)/%.c.o, \
-				$(patsubst $(SOURCE)/%.s, $(BUILD)/%.s.o, \
-				$(call rwildcard, $(SOURCE), *.s *.c)))
+		 $(patsubst $(SOURCE)/%.s, $(BUILD)/%.s.o, \
+		 $(call rwildcard, $(SOURCE), *.s *.c)))
 
 .PHONY: all
 all: $(TARGET).bin

@@ -10,8 +10,8 @@ uint pxi_is_rx_empty(void);
 uint pxi_is_tx_full(void);
 
 /** receive and send data through the PXI FIFO */
-u32 pxi_recv(void);
-void pxi_send(u32 msg);
+u32 pxi_recv(bool poll);
+void pxi_send(u32 msg, bool poll);
 
 /** manipulate the PXI SYNC block */
 u8 pxi_sync_get(void);

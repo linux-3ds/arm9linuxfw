@@ -48,12 +48,6 @@ SECTIONS
         *(.rodata*)
 
         . = ALIGN(16);
-
-        __vdev_s = ABSOLUTE(.);
-        KEEP(*(.vdev_list));
-        __vdev_cnt = (ABSOLUTE(.) - __vdev_s) / 4;
-
-        . = ALIGN(16);
         __data_e = ABSOLUTE(.);
     } >DTCM AT>AHBRAM
 

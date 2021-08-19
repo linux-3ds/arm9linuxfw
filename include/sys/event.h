@@ -5,8 +5,6 @@
 
 typedef u8 event_t;
 
-#define EVENT_INITIALIZE	0
-
 static inline void event_initialize(event_t *ev) {
 	*ev = 0;
 }

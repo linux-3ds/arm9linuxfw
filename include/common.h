@@ -65,7 +65,6 @@ typedef volatile s64 vs64;
 
 #define FN_HOT	__attribute__((hot))
 #define FN_ARM	__attribute__((target("arm")))
-#define FN_THUMB	__attribute__((target("thumb")))
 #define FN_NOINLINE	__attribute__((noinline))
 #define FN_RETNONNULL	__attribute__((returns_nonnull))
 #define FN_MUSTCHECK	__attribute__((warn_unused_result))

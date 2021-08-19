@@ -2,7 +2,7 @@
 
 #include "arm/bfn.h"
 
-#define IRQ_STACK_SIZE (1024)
+#define IRQ_STACK_SIZE (256)
 #define SYS_STACK_SIZE (2048)
 
 ASM_FUNCTION start_itcm
@@ -56,6 +56,22 @@ ASM_FUNCTION start_itcm
 	ldr r1, =0x3005
 	orr r0, r0, r1
 	mcr p15, 0, r0, c1, c0, 0
+
+
+	@ Map SDIO3 to use the SD card and be accessible from the ARM11
+	ldr r0, =0x10000000
+
+	ldr r1, [r0, #0x20]
+	orr r1, r1, #(1 << 8)
+	bic r1, r1, #(1 << 9)
+	str r1, [r0, #0x20]
+
+
+	@ Allow SDIO2 and SDIO3 to be used as CDMA peripherals
+	ldr r0, =0x1014010C
+	ldrh r1, [r0]
+	orr r1, r1, #((1 << 4) | (1 << 5))
+	strh r1, [r0]
 
 
 	@ Branch to C code
