@@ -38,8 +38,8 @@ typedef struct {
 } PACKED blk_config;
 
 typedef struct {
-	u32 resv;
 	u32 type;
+	u32 resv;
 	u64 sector_offset;
 } PACKED vblk_t;
 
@@ -91,20 +91,35 @@ static void sdmc_rx(vdev_s *vdev, vqueue_s *vq, const vblk_t *blk, vjob_s *vj, v
 }
 
 static void sdmc_tx(vdev_s *vdev, vqueue_s *vq, const vblk_t *blk, vjob_s *vj, vdesc_s *vd) {
-	// single continuous descriptor that contains everything?
+	int err = 0;
+	u32 offset = blk->sector_offset;
 
-	u32 offset, count;
-	u8 *data = vd->data + sizeof(*blk);
+	// all data needs to be handled in separate descriptors
+	while(vqueue_fetch_job_next(vq, vj) >= 0) {
+		vdesc_s desc;
 
-	offset = blk->sector_offset;
-	count = vd->length - sizeof(*blk) - 1;
+		vqueue_get_job_desc(vq, vj, &desc);
 
-	DBG_ASSERT(!(count % 512));
+		uint32_t len = desc.length;
+		u8 *data = desc.data;
 
-	count /= 512;
+		while(len > 0) {
+			uint32_t blklen = len >= 512 ? 512 : len;
 
-	sdmmc_sdcard_writesectors(offset, count, data);
-	data[count * 512] = 0; // status byte
+			if (blklen == 512) {
+				err |= sdmmc_sdcard_writesectors(offset, 1, data) ? 1 : 0;
+			} else if (blklen == 1) {
+				*data = 0;
+				vjob_add_written(vj, 1);
+			} else {
+				__asm__ volatile("bkpt\n\t" ::: "memory");
+			}
+
+			offset += blklen;
+			data += blklen;
+			len -= blklen;
+		}
+	}
 }
 
 static void sdmc_process_vqueue(vdev_s *vdev, vqueue_s *vq) {
