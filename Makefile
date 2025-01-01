@@ -17,7 +17,7 @@ DBG_FLAG :=
 
 INCLUDE := -I$(SOURCE) -I$(INCDIR)
 ASFLAGS := $(SUBARCH) $(INCLUDE) -x assembler-with-cpp
-CFLAGS := $(SUBARCH) $(INCLUDE) -MMD -MP -std=c11 -Og -pipe -Wall -Wextra \
+CFLAGS := $(SUBARCH) $(INCLUDE) -MMD -MP -std=c11 -Os -pipe -Wall -Wextra \
 			-Wno-unused-variable -Wno-unused-parameter -Wno-unused-function \
 			-ffunction-sections -fomit-frame-pointer -ffast-math $(DBG_FLAG)
 
